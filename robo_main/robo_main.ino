@@ -6,7 +6,7 @@
 ********************************/
 
 void setup() {
-  recieved_data = (int*) calloc(32, sizeof(int));
+  received_data = (int*) calloc(32, sizeof(int));
 }
 
 void loop() {
@@ -19,7 +19,7 @@ void loop() {
 *    Functions                  *
 ********************************/
 
-void decode_recieved_data(){
+void decode_received_data(){
   
 }
 
