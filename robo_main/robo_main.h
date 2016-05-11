@@ -1,5 +1,5 @@
 
-int* recieved_data;
+int* received_data;
 
 void decode_received_data(void);
 void set_motors(int val_l, int val_r);
