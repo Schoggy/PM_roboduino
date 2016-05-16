@@ -46,6 +46,8 @@ void update_motor_steering(char* input);
  *********************************/
 
 void setup() { // the Arduino will run this function once when it is initially powered on
+  init_pins();
+  
   rd_buf_size = 1024;
   rdata = (char*) calloc(rd_buf_size * PACKET_SIZE, sizeof(char));
   rdata_pos_r = rdata_pos_w = 0;
