@@ -1,5 +1,6 @@
 #include "robo_main.h"
 #include "robo_custom.h"
+#include "robo_pins.h"
 
 #define PACKET_SIZE 8 // number of bytes per packet
 #define BUF_SIZE_B (rd_buf_size * PACKET_SIZE) // buffer size in bytes
