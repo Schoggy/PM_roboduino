@@ -18,6 +18,7 @@ unsigned int data_pending;  // number of data packets waiting to be decoded
 // current status
 int motor_speed_r, motor_speed_l; 
 bool leds_front;
+bool leds_status;
 
 
 // function array: all functions have the return type of void and a char pointer as the parameter
@@ -25,6 +26,19 @@ bool leds_front;
 typedef void (*fptr_arr)(char*);
 fptr_arr functions[256] = {NULL};
 
+/*********************************
+ *    Function Prototypes        *
+ *********************************/
+ 
+void setup(void);
+void loop(void);
+void decode_received_data(void);
+void set_motors(void);
+void set_leds(void);
+void send_data(char* data);
+void receive_data(void);
+void update_leds(char* input);
+void update_motor_steering(char* input);
 
 /*********************************
  *    Main Arduino Functions     *
@@ -38,6 +52,7 @@ void setup() { // the Arduino will run this function once when it is initially p
   motor_speed_r = motor_speed_r = 0;
   
   leds_front = false;
+  leds_status = true;
   
   // setup for automatic functions (function pointer array)
   // syntax: functions[function index (0 to 255)] = &function_name;
@@ -68,11 +83,18 @@ void decode_received_data(){ // read and decode data packets sent to the robot
 }
 
 void set_motors(){
-  // speed of the individual motors will be set with this function.
+  // set the speed of both motors
 }
 
 void send_data(char* data){
   // send data back to the controller
+}
+
+void set_leds(){
+  // set the state of all leds on the robot
+  
+  digitalWrite(LED_STATUS, leds_status);
+  digitalWrite(LED_FRONT, leds_front);
 }
 
 /*********************************
@@ -99,7 +121,7 @@ void receive_data(){
  * so they can access the data that called them.
  */
 
-void set_leds(char* input){
+void update_leds(char* input){
   // update the state of the GPIO pins controlling the LEDS of the robot
 }
 
