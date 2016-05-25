@@ -1,9 +1,9 @@
 /*
-  Simple test program for the HC-06 slave module
+  Simple test program for the bluetooth receiver
 
   commands:
-  1 to turn the built-in LED on)
-  0 to turn the built-in LED off)
+  1 to turn the built-in LED on
+  0 to turn the built-in LED off
   b to blink
 
   TODO: the serial buffer can hold 64 bytes , use Serial.overflow() to check if there was an overflow
