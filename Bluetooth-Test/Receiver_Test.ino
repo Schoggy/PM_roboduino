@@ -29,6 +29,7 @@ void setup()
 {
   Serial.begin(9600);            // set the baud rate to 9600, (same should be set in the serial monitor if connected to usb)
   pinMode(LED_PIN, OUTPUT);      // pin 13 allows to control the built-in led of the arduino UNO
+  Serial.println("Roboduino receiver test tool started");
 }
 
 void loop()
@@ -54,11 +55,13 @@ void handle_data()
     }
     if (inputString == "1")
     {
+      isBlinking = false;
       digitalWrite(LED_PIN, HIGH); //in case of '1' turn the LED on
       Serial.println("Toggled led");
     }
     else if (inputString == "0")
     {
+      isBlinking = false;
       digitalWrite(LED_PIN, LOW); //incase of '0' turn the LED off
       Serial.println("Toggled led");
     }
@@ -74,16 +77,16 @@ void handle_data()
 
 void blink()
 {
-  if (isBlinking)
+  if (isBlinking) // if enabled the led gets toggled every 500 ms
   {
     newMillis = millis();
-    if (newMillis >= lastMillis + 250)
+    if (newMillis >= lastMillis + 500)
     {
       ledOn = !ledOn;
       digitalWrite(LED_PIN, ledOn);
+      Serial.println("Toggled led");
       lastMillis = newMillis;
     }
   }
 
 }
-
