@@ -21,6 +21,7 @@ bool isBlinking = true;
 bool ledOn = false;
 char junk;
 String inputString = "";
+int ledToggleCounter = 0;
 
 unsigned long lastMillis = 0;
 unsigned long newMillis = 0;
@@ -57,19 +58,22 @@ void handle_data()
     {
       isBlinking = false;
       digitalWrite(LED_PIN, HIGH); //in case of '1' turn the LED on
-      Serial.println("Toggled led");
+      Serial.print("LED On ");
+      Serial.println(++ledToggleCounter);
     }
     else if (inputString == "0")
     {
       isBlinking = false;
       digitalWrite(LED_PIN, LOW); //incase of '0' turn the LED off
-      Serial.println("Toggled led");
+      Serial.print("LED Off ");
+      Serial.println(++ledToggleCounter);
     }
     else if (inputString == "b")
     {
       isBlinking = !isBlinking;
       Serial.println(isBlinking ? "Blink mode enabled" : "Blink mode disabled");
     }
+    
     inputString = ""; //clear the string
   }
 }
@@ -84,7 +88,8 @@ void blink()
     {
       ledOn = !ledOn;
       digitalWrite(LED_PIN, ledOn);
-      Serial.println("Toggled led");
+      Serial.print(ledOn ? "LED On " : "LED Off ");
+      Serial.println(++ledToggleCounter);
       lastMillis = newMillis;
     }
   }
