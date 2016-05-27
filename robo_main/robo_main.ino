@@ -15,6 +15,8 @@ unsigned int rdata_pos_r;  // position of the read pointer
 unsigned int rdata_pos_w;  // position of the write pointer
 unsigned int rd_buf_size;  // size of the received data buffer in packets
 unsigned int data_pending; // number of data packets waiting to be decoded
+short motor_l; // speed left motor
+short motor_r; // speed right motor
 
 // current status
 int motor_speed_r, motor_speed_l;
