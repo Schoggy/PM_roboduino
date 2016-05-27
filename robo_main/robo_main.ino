@@ -136,4 +136,40 @@ void update_leds(char *input) {
 
 void update_motor_steering(char *input) {
   // calculate new values for the motors
+  //forward
+	if(motor_l > 0 || motor_r > 0)
+	{
+		digitalWrite(MOTOR_L_BACKWARD, LOW); 
+  	digitalWrite(MOTOR_R_BACKWARD, LOW);
+
+		//Kompensation Fehlertoleranz Joystick
+		if(motor_l > -2 && motor_r > -2)
+		{
+		  digitalWrite(MOTOR_L_FORWARD, LOW);
+  	  digitalWrite(MOTOR_R_FORWARD, LOW);  
+  		digitalWrite(MOTOR_L_BACKWARD, LOW);
+  		digitalWrite(MOTOR_R_BACKWARD, LOW);	
+		}
+		
+		analogWrite(MOTOR_L_FOWARD, motor_l);
+    analogWrite(MOTOR_R_FOWARD, motor_r);
+	}
+	//backward
+	else
+	{
+  	digitalWrite(MOTOR_L_FOWARD, LOW);  
+  	digitalWrite(MOTOR_R_FOWARD, LOW);
+
+		//Kompensation Fehlertoleranz Joystick
+		if(motor_l > -2 && motor_r > -2)
+		{
+			digitalWrite(MOTOR_L_FORWARD, LOW);
+  	  digitalWrite(MOTOR_R_FORWARD, LOW);  
+  		digitalWrite(MOTOR_L_BACKWARD, LOW);
+  		digitalWrite(MOTOR_R_BACKWARD, LOW);	
+		}
+
+		analogWrite(MOTOR_L_BACKWARD, (motor_l*(-1)));
+    analogWrite(MOTOR_R_BACKWARD, (motor_r*(-1)));
+	}
 }
