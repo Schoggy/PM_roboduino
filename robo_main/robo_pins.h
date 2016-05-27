@@ -10,7 +10,7 @@
 void init_pins(void) { // initialisation for pins; called from setup()
   pinMode(LED_STATUS, OUTPUT);
   pinMode(LED_FRONT, OUTPUT);
-  pinMode(MOTOR_L_FOWARD, OUTPUT);
+  pinMode(MOTOR_L_FORWARD, OUTPUT);
   pinMode(MOTOR_L_BACKWARD, OUTPUT);
   pinMode(MOTOR_R_FORWARD, OUTPUT);
   pinMode(MOTOR_R_BACKWARD, OUTPUT);
