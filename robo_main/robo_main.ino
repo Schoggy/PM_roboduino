@@ -2,19 +2,24 @@
 #include "robo_main.h"
 #include "robo_pins.h"
 
-#define PACKET_SIZE 8                          // number of bytes per packet
-#define BUF_SIZE_B (rd_buf_size * PACKET_SIZE) // buffer size in bytes
+#define FNR_TEST 42
+
+
+/*********************************
+ *    Structs                    *
+ *********************************/
+
+typedef struct received_data{
+  char funcnr;
+  char data[15];
+} RDATA;
 
 /*********************************
  *    Global Variables           *
  *********************************/
 
 // data transmission
-char *rdata;               // data sent to the robot
-unsigned int rdata_pos_r;  // position of the read pointer
-unsigned int rdata_pos_w;  // position of the write pointer
-unsigned int rd_buf_size;  // size of the received data buffer in packets
-unsigned int data_pending; // number of data packets waiting to be decoded
+
 short motor_l; // speed left motor
 short motor_r; // speed right motor
 
@@ -52,10 +57,6 @@ void setup() { // the Arduino will run this function once
 
   init_pins();
 
-  rd_buf_size = 1024;
-  rdata = (char *)calloc(rd_buf_size * PACKET_SIZE, sizeof(char));
-  rdata_pos_r = rdata_pos_w = 0;
-
   motor_speed_r = motor_speed_r = 0;
 
   leds_front = false;
@@ -64,10 +65,12 @@ void setup() { // the Arduino will run this function once
   // setup for automatic functions (function pointer array)
   // syntax: functions[function index (0 to 255)] = &function_name;
   // the first byte send to the robot is the function index.
-  // the next 7 bytes data for the function.
+  // the next 15 bytes are data for the function.
 
   functions[0] = &set_leds;
   functions[1] = &update_motor_steering;
+  
+  functions[FNR_TEST] = &led_test;
 }
 
 void loop() { // the Arduino will loop this function forever
@@ -82,10 +85,7 @@ void loop() { // the Arduino will loop this function forever
 
 void decode_received_data() { // read and decode data packets sent to the robot
   while (data_pending > 0) {
-    functions[*rdata[rdata_pos_r]](rdata[rdata_pos_r]); // call function
-
-    rdata_pos_r = (rdata_pos_r + 8) % BUF_SIZE_B;
-    data_pending--;
+    
   }
 }
 
@@ -109,11 +109,7 @@ void set_leds() {
  *********************************/
 
 void receive_data() {
-  // write data into buffer
-  //*rdata[rdata_pos_w] = received_data;
-
-  // advance write pointer by one byte in the ring buffer
-  rdata_pos_w = (rdata_pos_w + 1) % BUF_SIZE_B;
+  
   data_pending++;
 }
 
@@ -134,9 +130,9 @@ void update_leds(char *input) {
   // update the state of the GPIO pins controlling the LEDS of the robot
 }
 
-void update_motor_steering(char *input) {
-  // calculate new values for the motors
+void update_motor_steering(RDATA* rd) {
   //forward
+  
 	if(motor_l > 0 || motor_r > 0)
 	{
 		digitalWrite(MOTOR_L_BACKWARD, LOW); 
@@ -169,7 +165,20 @@ void update_motor_steering(char *input) {
   		digitalWrite(MOTOR_R_BACKWARD, LOW);	
 		}
 
-		analogWrite(MOTOR_L_BACKWARD, (motor_l*(-1)));
-    analogWrite(MOTOR_R_BACKWARD, (motor_r*(-1)));
+		analogWrite(MOTOR_L_BACKWARD, (motor_l * ( -1 )));
+    analogWrite(MOTOR_R_BACKWARD, (motor_r * ( -1 )));
 	}
 }
+
+void led_test(RDATA* rd){
+
+
+
+}
+
+
+
+
+
+
+
