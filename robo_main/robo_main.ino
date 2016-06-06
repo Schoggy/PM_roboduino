@@ -2,7 +2,7 @@
 #include "robo_main.h"
 #include "robo_pins.h"
 
-#define FNR_TEST 42
+#define STACK_LENGTH 64
 
 
 /*********************************
@@ -12,16 +12,17 @@
 typedef struct received_data{
   char funcnr;
   char data[15];
-} RDATA;
+} RCDATA;
 
 /*********************************
  *    Global Variables           *
  *********************************/
 
-// data transmission
+// function call array
 
-short motor_l; // speed left motor
-short motor_r; // speed right motor
+RCDATA* call_stack_top;
+RCDATA* exec_ptr;
+RCDATA* rcv_ptr;
 
 // current status
 int motor_speed_r, motor_speed_l;
@@ -57,7 +58,10 @@ void setup() { // the Arduino will run this function once
 
   init_pins();
 
-  motor_speed_r = motor_speed_r = 0;
+  call_stack_top = (RCDATA*) calloc(STACK_LENGTH, sizeof(RCDATA));
+
+  exec_ptr = rcv_ptr = call_stack_top;
+  
 
   leds_front = false;
   leds_status = true;
@@ -84,13 +88,11 @@ void loop() { // the Arduino will loop this function forever
  *********************************/
 
 void decode_received_data() { // read and decode data packets sent to the robot
-  while (data_pending > 0) {
+  while (rcv_ptr != exec_ptr) {
     
+    functions[exec_ptr->funcnr](exec_ptr);
+    exec_ptr = call_stack_top + (((exec_ptr - call_stack_top) + 1) % STACK_LENGTH);
   }
-}
-
-void set_motors() {
-  // set the speed of both motors
 }
 
 void send_data(char *data) {
@@ -110,7 +112,17 @@ void set_leds() {
 
 void receive_data() {
   
-  data_pending++;
+  // make new struct
+  RCDATA data;
+  
+  // add received data to the new struct
+  
+  
+  
+  
+  // add struct to the call stack
+  rcv_ptr = &data;
+  rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
 }
 
 /*********************************
