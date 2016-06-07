@@ -1,17 +1,9 @@
 #include "robo_custom.h"
 #include "robo_main.h"
 #include "robo_pins.h"
+#include "transmit.h"
 
 #define STACK_LENGTH 64
-
-/*********************************
- *    Structs                    *
- *********************************/
-
-typedef struct received_data {
-  char funcnr;
-  char data[15];
-} RCDATA;
 
 /*********************************
  *    Global Variables           *
