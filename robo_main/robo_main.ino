@@ -4,12 +4,11 @@
 
 #define STACK_LENGTH 64
 
-
 /*********************************
  *    Structs                    *
  *********************************/
 
-typedef struct received_data{
+typedef struct received_data {
   char funcnr;
   char data[15];
 } RCDATA;
@@ -20,9 +19,9 @@ typedef struct received_data{
 
 // function call array
 
-RCDATA* call_stack_top;
-RCDATA* exec_ptr;
-RCDATA* rcv_ptr;
+RCDATA *call_stack_top;
+RCDATA *exec_ptr;
+RCDATA *rcv_ptr;
 
 // current status
 int motor_speed_r, motor_speed_l;
@@ -46,8 +45,8 @@ void set_motors(void);
 void set_leds(void);
 void send_data(char *data);
 void receive_data(void);
-void update_leds(char *input);
-void update_motor_steering(char *input);
+void update_leds(RCDATA *rd);
+void update_motor_steering(RCDATA *rd);
 
 /*********************************
  *    Main Arduino Functions     *
@@ -58,10 +57,9 @@ void setup() { // the Arduino will run this function once
 
   init_pins();
 
-  call_stack_top = (RCDATA*) calloc(STACK_LENGTH, sizeof(RCDATA));
+  call_stack_top = (RCDATA *)calloc(STACK_LENGTH, sizeof(RCDATA));
 
   exec_ptr = rcv_ptr = call_stack_top;
-  
 
   leds_front = false;
   leds_status = true;
@@ -73,7 +71,7 @@ void setup() { // the Arduino will run this function once
 
   functions[0] = &set_leds;
   functions[1] = &update_motor_steering;
-  
+
   functions[FNR_TEST] = &led_test;
 }
 
@@ -89,9 +87,10 @@ void loop() { // the Arduino will loop this function forever
 
 void decode_received_data() { // read and decode data packets sent to the robot
   while (rcv_ptr != exec_ptr) {
-    
+
     functions[exec_ptr->funcnr](exec_ptr);
-    exec_ptr = call_stack_top + (((exec_ptr - call_stack_top) + 1) % STACK_LENGTH);
+    exec_ptr =
+        call_stack_top + (((exec_ptr - call_stack_top) + 1) % STACK_LENGTH);
   }
 }
 
@@ -111,17 +110,10 @@ void set_leds() {
  *********************************/
 
 void receive_data() {
-  
-  // make new struct
-  RCDATA data;
-  
+  RCDATA data * = rcv_ptr;
   // add received data to the new struct
-  
-  
-  
-  
-  // add struct to the call stack
-  rcv_ptr = &data;
+
+  // advance
   rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
 }
 
@@ -138,59 +130,51 @@ void receive_data() {
  * so they can access the data that called them.
  */
 
-void update_leds(char *input) {
+void update_leds(RCDATA *rd) {
   // update the state of the GPIO pins controlling the LEDS of the robot
 }
 
-void update_motor_steering(RDATA* rd) {
-  //forward
-  
-	if(motor_l > 0 || motor_r > 0)
-	{
-		digitalWrite(MOTOR_L_BACKWARD, LOW); 
-  	digitalWrite(MOTOR_R_BACKWARD, LOW);
+void update_motor_steering(RCDATA *rd) {
 
-		//Kompensation Fehlertoleranz Joystick
-		if(motor_l > -2 && motor_r > -2)
-		{
-		  digitalWrite(MOTOR_L_FORWARD, LOW);
-  	  digitalWrite(MOTOR_R_FORWARD, LOW);  
-  		digitalWrite(MOTOR_L_BACKWARD, LOW);
-  		digitalWrite(MOTOR_R_BACKWARD, LOW);	
-		}
-		
-		analogWrite(MOTOR_L_FOWARD, motor_l);
+  short motor_l = 0, motor_r = 0;
+
+  motor_l = *rd->data[0];
+  motor_l = motor_l << 8;
+  motor_l = *rd->data[1];
+
+  // forward
+
+  if (motor_l > 0 || motor_r > 0) {
+    digitalWrite(MOTOR_L_BACKWARD, LOW);
+    digitalWrite(MOTOR_R_BACKWARD, LOW);
+
+    // Kompensation Fehlertoleranz Joystick
+    if (motor_l > -2 && motor_r > -2) {
+      digitalWrite(MOTOR_L_FORWARD, LOW);
+      digitalWrite(MOTOR_R_FORWARD, LOW);
+      digitalWrite(MOTOR_L_BACKWARD, LOW);
+      digitalWrite(MOTOR_R_BACKWARD, LOW);
+    }
+
+    analogWrite(MOTOR_L_FOWARD, motor_l);
     analogWrite(MOTOR_R_FOWARD, motor_r);
-	}
-	//backward
-	else
-	{
-  	digitalWrite(MOTOR_L_FOWARD, LOW);  
-  	digitalWrite(MOTOR_R_FOWARD, LOW);
+  }
+  // backward
+  else {
+    digitalWrite(MOTOR_L_FOWARD, LOW);
+    digitalWrite(MOTOR_R_FOWARD, LOW);
 
-		//Kompensation Fehlertoleranz Joystick
-		if(motor_l > -2 && motor_r > -2)
-		{
-			digitalWrite(MOTOR_L_FORWARD, LOW);
-  	  digitalWrite(MOTOR_R_FORWARD, LOW);  
-  		digitalWrite(MOTOR_L_BACKWARD, LOW);
-  		digitalWrite(MOTOR_R_BACKWARD, LOW);	
-		}
+    // Kompensation Fehlertoleranz Joystick
+    if (motor_l > -2 && motor_r > -2) {
+      digitalWrite(MOTOR_L_FORWARD, LOW);
+      digitalWrite(MOTOR_R_FORWARD, LOW);
+      digitalWrite(MOTOR_L_BACKWARD, LOW);
+      digitalWrite(MOTOR_R_BACKWARD, LOW);
+    }
 
-		analogWrite(MOTOR_L_BACKWARD, (motor_l * ( -1 )));
-    analogWrite(MOTOR_R_BACKWARD, (motor_r * ( -1 )));
-	}
+    analogWrite(MOTOR_L_BACKWARD, (motor_l * (-1)));
+    analogWrite(MOTOR_R_BACKWARD, (motor_r * (-1)));
+  }
 }
 
-void led_test(RDATA* rd){
-
-
-
-}
-
-
-
-
-
-
-
+void led_test(RDATA *rd) {}
