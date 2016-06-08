@@ -54,7 +54,7 @@ void setup() {
 
 void loop() {
 
-  update_vaules();
+  update_values();
   write_information();
 }
 
