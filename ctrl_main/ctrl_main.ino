@@ -2,7 +2,7 @@
 
 /*********************************
  *    Library includes           *
- * ******************************/
+ * *******************************/
 
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
@@ -34,7 +34,7 @@ void update_values(void);
 
 
 /*********************************
- *    Main Arduino Functions     *
+ *    Arduino on start setup     *
  *********************************/
 
 void setup() {
@@ -67,7 +67,7 @@ void setup() {
 /*********************************
  *    Main loop where all        *
  *    Function calls are placed  *
- * ******************************/
+ * *******************************/
 
 void loop() {
 
