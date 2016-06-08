@@ -1,19 +1,29 @@
 /* Remote Control for Roboduino */
 
+/*********************************
+ *    Library includes           *
+ * ******************************/
+
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+
 
 /*********************************
  *    Global Variables           *
  *********************************/
 
-int read_x = A0;
-int read_y = A1;
+/*
+For I2C communication, the SCL port is connected to A5,
+and SDA to A4. Those are Arduinos default I2C ports
+*/
+
+int read_x = A0;    //Joystick-connector X
+int read_y = A1;    //Joystick-connector Y
 int motor_l = 0;
 int motor_r = 0;
-
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7);
+
 
 /*********************************
  *    Function Prototypes        *
@@ -21,6 +31,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7);
 
 void write_information(void);
 void update_values(void);
+
 
 /*********************************
  *    Main Arduino Functions     *
@@ -52,10 +63,17 @@ void setup() {
   // init for bluetooth module
 }
 
+
+/*********************************
+ *    Main loop where all        *
+ *    Function calls are placed  *
+ * ******************************/
+
 void loop() {
 
   update_values();
   write_information();
+  
 }
 
 /*********************************
@@ -82,17 +100,20 @@ void write_information() {
 }
 
 void update_values() {
-
-  /* Read the Joystick Position and normalise them between -255 and 255 */
+  /*
+  Read the Joystick Position and normalize them
+  to fit between -255 and 255 
+  */
+  
   motor_l = (analogRead(read_x) - 521) / 2;
   if (motor_l < -255) {
     motor_l = -255;
-  }
+ } 
   if (motor_l > 255) {
     motor_l = 255;
   }
 
-  delay(1);
+  delay(1);   //necessary because ADC needs time
 
   motor_r = (analogRead(read_y) - 512) / 2;
   if (motor_r < -255) {
@@ -102,7 +123,11 @@ void update_values() {
     motor_r = 255;
   }
 
-  /* Error correction because the potentiometer isn't 100% precise */
+  /* 
+  Error correction because the potentiometer 
+  isn't 100% precise 
+  */
+  
   if (-2 < motor_r && 2 > motor_r) {
     motor_r = 0;
   }
