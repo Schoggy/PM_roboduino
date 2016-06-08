@@ -5,6 +5,8 @@
 
 #define STACK_LENGTH 64
 
+typedef data_packet RCDATA;
+
 /*********************************
  *    Global Variables           *
  *********************************/
@@ -33,9 +35,8 @@ fptr_arr functions[256] = {NULL};
 void setup(void);
 void loop(void);
 void decode_received_data(void);
-void set_motors(void);
 void set_leds(void);
-void send_data(char *data);
+void send_data(void);
 void receive_data(void);
 void update_leds(RCDATA *rd);
 void update_motor_steering(RCDATA *rd);
@@ -69,7 +70,6 @@ void setup() { // the Arduino will run this function once
 
 void loop() { // the Arduino will loop this function forever
   decode_received_data();
-  set_motors();
   set_leds();
 }
 
@@ -86,7 +86,7 @@ void decode_received_data() { // read and decode data packets sent to the robot
   }
 }
 
-void send_data(char *data) {
+void send_data() {
   // send data back to the controller
 }
 
@@ -126,47 +126,42 @@ void update_leds(RCDATA *rd) {
   // update the state of the GPIO pins controlling the LEDS of the robot
 }
 
+#define MOTOR_VL ((*rd->data[0] << 8) | *rd->data[1])
+#define MOTOR_VR ((*rd->data[2] << 8) | *rd->data[3])
+
 void update_motor_steering(RCDATA *rd) {
+  
 
-  short motor_l = 0, motor_r = 0;
-
-  motor_l = *rd->data[0];
-  motor_l = motor_l << 8;
-  motor_l = *rd->data[1];
-
+  /*
   // forward
-
   if (motor_l > 0 || motor_r > 0) {
     digitalWrite(MOTOR_L_BACKWARD, LOW);
     digitalWrite(MOTOR_R_BACKWARD, LOW);
 
-    // Kompensation Fehlertoleranz Joystick
-    if (motor_l > -2 && motor_r > -2) {
-      digitalWrite(MOTOR_L_FORWARD, LOW);
-      digitalWrite(MOTOR_R_FORWARD, LOW);
-      digitalWrite(MOTOR_L_BACKWARD, LOW);
-      digitalWrite(MOTOR_R_BACKWARD, LOW);
-    }
-
     analogWrite(MOTOR_L_FOWARD, motor_l);
     analogWrite(MOTOR_R_FOWARD, motor_r);
-  }
-  // backward
-  else {
+    
+  } else { // backward
     digitalWrite(MOTOR_L_FOWARD, LOW);
     digitalWrite(MOTOR_R_FOWARD, LOW);
 
-    // Kompensation Fehlertoleranz Joystick
-    if (motor_l > -2 && motor_r > -2) {
-      digitalWrite(MOTOR_L_FORWARD, LOW);
-      digitalWrite(MOTOR_R_FORWARD, LOW);
-      digitalWrite(MOTOR_L_BACKWARD, LOW);
-      digitalWrite(MOTOR_R_BACKWARD, LOW);
-    }
-
     analogWrite(MOTOR_L_BACKWARD, (motor_l * (-1)));
     analogWrite(MOTOR_R_BACKWARD, (motor_r * (-1)));
+  }*/
+  
+  if (motor_l > 0) {
+    digitalWrite(MOTOR_L_BACKWARD, LOW);
+    analogWrite(MOTOR_L_FORWARD, MOTOR_VL);
+  } else {
+    digitalWrite(MOTOR_L_FORWARD, LOW);
+    analogWrite(MOTOR_L_BACKWARD, MOTOR_VL);
+  }
+  
+    if (motor_r > 0) {
+    digitalWrite(MOTOR_R_BACKWARD, LOW);
+    analogWrite(MOTOR_R_FORWARD, MOTOR_VR);
+  } else {
+    digitalWrite(MOTOR_R_FORWARD, LOW);
+    analogWrite(MOTOR_R_BACKWARD, MOTOR_VR);
   }
 }
-
-void led_test(RDATA *rd) {}

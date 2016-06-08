@@ -8,8 +8,6 @@
 
 struct data_packet {
   char funcnr;
-  char data[15];
+  char data[7];
 };
-
-
 
