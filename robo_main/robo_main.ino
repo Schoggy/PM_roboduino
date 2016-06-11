@@ -75,6 +75,7 @@ void loop() { // the Arduino will loop this function forever
   
   //init_t_send(); // run test functions
   
+  receive_data()
   decode_received_data();
 }
 
