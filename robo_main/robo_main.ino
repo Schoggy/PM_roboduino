@@ -64,12 +64,16 @@ void setup() { // The Arduino will run this function once
 
   functions[FNCNR_LED] = update_leds;
   functions[FNCNR_MOTORS] = update_motor_steering;
+  
+  
+  
+  Serial.begin(9600); // start bluetooth serial
 
 }
 
 void loop() { // the Arduino will loop this function forever
   
-  init_t_send();
+  //init_t_send(); // run test functions
   
   decode_received_data();
 }
@@ -116,6 +120,9 @@ void decode_received_data() {
    * There are two pointers, rcv_ptr, pointing to the last packet received, and exec_ptr, pointing to the last packet read.
    * This function keeps reading data packets until the last packet read is the last packet received.
    */
+   
+
+   
   
   while (rcv_ptr != exec_ptr) {
     functions[exec_ptr->funcnr](exec_ptr);
@@ -137,6 +144,18 @@ void receive_data() {
   /* This function reads a data packet from the bbuffer of the bluetooth module into the call stack 
    * and advances the rcv_ptr by one.
    */
+   
+   
+  if(Serial.available() == sizeof(RCDATA))
+  {
+    for(int i = 0; i < sizeof(RCDATA); i++)
+    {
+       *((byte*)rcv_ptr + i) = Serial.read();
+    }
+  }
+   
+   
+   
    
   RCDATA* data = rcv_ptr;
   // add received data to the new struct
