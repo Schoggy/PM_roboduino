@@ -145,23 +145,19 @@ void receive_data() {
    * and advances the rcv_ptr by one.
    */
    
-   
-  if(Serial.available() == sizeof(RCDATA))
+   //TODO: make sure that Serial.begin(9600) is called in the init() function
+  if(Serial.available() == sizeof(RCDATA)) // if there is a new package in the serial buffer
   {
     for(int i = 0; i < sizeof(RCDATA); i++)
     {
-       *((byte*)rcv_ptr + i) = Serial.read();
+       *((byte*)rcv_ptr + i) = Serial.read(); // copy the serial buffer into the call stack
     }
-  }
-   
-   
-   
-   
-  RCDATA* data = rcv_ptr;
-  // add received data to the new struct
+    RCDATA* data = rcv_ptr;
+    // add received data to the new struct
 
-  // advance
-  rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
+    // advance
+    rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
+  }
 }
 
 void t_receive_data(RCDATA rc) {
