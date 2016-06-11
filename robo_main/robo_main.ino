@@ -1,5 +1,4 @@
 #include "robo_custom.h"
-#include "robo_main.h"
 #include "robo_pins.h"
 #include "transmit.h"
 
@@ -17,6 +16,11 @@ typedef data_packet RCDATA;
 RCDATA *call_stack_top;
 RCDATA *exec_ptr;
 RCDATA *rcv_ptr;
+
+RCDATA *t_send_arr;
+
+
+int t_send_nr;
 
 // Function array: All functions have the return type of void and a RCDATA*
 // as the parameter
@@ -49,9 +53,6 @@ void setup() { // The Arduino will run this function once
 
   exec_ptr = rcv_ptr = call_stack_top;
 
-  leds_front = false;
-  leds_status = true;
-
   /* Setup for automatic functions (function pointer array)
    * Syntax: functions[function index (0 to 255)] = &function_name;
    * The first byte send to the robot is the function index number 
@@ -59,14 +60,51 @@ void setup() { // The Arduino will run this function once
    * The next 7 bytes are data for the function.
    */
 
-  functions[FUNCNR_LED] = &set_leds;
-  functions[FUNCNR_MOTORS] = &update_motor_steering;
+  t_send_nr = 0;
+
+  functions[FNCNR_LED] = update_leds;
+  functions[FNCNR_MOTORS] = update_motor_steering;
 
 }
 
 void loop() { // the Arduino will loop this function forever
+  
+  init_t_send();
+  
   decode_received_data();
-  set_leds();
+}
+
+ /* TEST FUNCTIONS */
+ 
+int timer;
+void tick(){
+  while(1){
+    for(timer = 0; timer < 50; timer++){}
+    t_send(5);
+    for(timer = 0; timer < 10; timer++){}
+    decode_received_data();
+    for(timer = 0; timer < 500; timer++){}
+  }
+}
+
+void t_send(int nr){
+  for(int n = 0; n < nr; n++){
+    t_receive_data(t_send_arr[t_send_nr + n]);
+  }
+}
+
+void init_t_send(){
+  t_send_arr = (RCDATA*) calloc(256, sizeof(RCDATA));
+  RCDATA* arr_ptr = t_send_arr;
+  for(char n = 0; n < 255; n++){
+    RCDATA rc;
+    rc.funcnr = 0;
+    rc.data[0] = 0b00000010;
+    rc.data[1] = n;
+    rc.data[2] = 255 - n;
+    rc.data[3] = 0;
+  }
+  
 }
 
 /*********************************
@@ -100,8 +138,23 @@ void receive_data() {
    * and advances the rcv_ptr by one.
    */
    
-  RCDATA data * = rcv_ptr;
+  RCDATA* data = rcv_ptr;
   // add received data to the new struct
+
+  // advance
+  rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
+}
+
+void t_receive_data(RCDATA rc) {
+  /* This function reads a data packet from the bbuffer of the bluetooth module into the call stack 
+   * and advances the rcv_ptr by one.
+   */
+  
+  free(rcv_ptr);
+  rcv_ptr = &rc;
+  // add received data to the new struct
+
+  
 
   // advance
   rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
