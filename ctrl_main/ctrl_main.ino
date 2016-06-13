@@ -23,7 +23,12 @@ int motor_l = 0;
 int motor_r = 0;
 int ledsw = 0;
 data_packet ddata;
-int ledmode = 0;
+int ledmode;
+bool transmit;
+bool j_button_rst;
+volatile bool j_button_pressed;
+bool rgb_party;
+int party_status;
 
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7);
 
@@ -45,12 +50,15 @@ void setup() {
   lcd.begin(20, 4);
   lcd.setBacklightPin(3, POSITIVE);
   lcd.setBacklight(HIGH);
-  //attachInterrupt(digitalPinToInterrupt(2),Changeled,RISING)
+  pinMode(2, INPUT);
+  digitalWrite(2, HIGH);
+  attachInterrupt(digitalPinToInterrupt(2), j_button, LOW);
+  
   pinMode(9, OUTPUT);
   pinMode(10, OUTPUT);
   pinMode(11, OUTPUT);
   pinMode(12, OUTPUT);
-  
+  pinMode(13, OUTPUT);
   /* Setup input pins for analog digital converter */
   pinMode(read_x, INPUT);
   pinMode(read_y, INPUT);
@@ -58,99 +66,143 @@ void setup() {
 
   /* Write static text on display */
   lcd.home(); // set cursor to 0,0
-  lcd.print("--------------------");
+  lcd.print("*Roboduino  Control*");
   lcd.setCursor(0, 1);
-  lcd.print("***Motor  Control***");
-  lcd.setCursor(0, 2);
   lcd.print("--------------------");
+  lcd.setCursor(0, 2);
+  lcd.print("*** LED-MODE:");
+  lcd.setCursor(17, 2);
+  lcd.print("***");
   lcd.setCursor(0, 3);
   lcd.print("Left:");
   lcd.setCursor(10, 3);
   lcd.print("Right:");
+
+  ledmode = 0;
+  transmit = true; 
+  j_button_pressed = false;
+  j_button_rst = false;
+  rgb_party = false;  
+  party_status = 0;
   
   // init for bluetooth module
   Serial.begin(9600);
 }
 
 void loop() {
-
-  Update_values();
-  Write_information();
-  Update_motor_steering();
+  if(j_button_pressed && !j_button_rst){
+    changeled();
+    Write_information();
+    j_button_rst = true;
+  }
+  if(j_button_rst){
+    if(digitalRead(2) == HIGH){
+      j_button_rst = false;
+      j_button_pressed = false;
+    }
+  }
+  if(transmit){
+    Update_values();
+    Update_motor_steering();
+    Write_information();
+  } else {
+    Update_values();
+  }
+  if(rgb_party){
+    partytime();
+  }
 }
 
 /*********************************
  *    Functions                  *
  *********************************/
  
+void j_button(){
+  j_button_pressed = true;
+  //digitalWrite(13, HIGH);
+}
+
+void partytime(){
+  ddata.funcnr = 0;
+  ddata.data[0] = 0b00000110;
+  ddata.data[1] = 0;
+  ddata.data[2] = 0;
+  ddata.data[3] = 0;
+  ddata.data[4] = 0;
+  ddata.data[5] = 0;
+  ddata.data[6] = 0;
+  
+  if(party_status < 255){
+    ddata.data[1] = ddata.data[4] = party_status;
+  } 
+    if(191 < party_status < 447) {
+       ddata.data[2] = ddata.data[5] = party_status - 191;
+    }
+      if(383 < party_status < 639){
+        ddata.data[3] = ddata.data[6] = party_status - 383;
+      }
+        if(party_status == 638){ 
+        party_status = 0;
+      }
+    
+  
+
+  party_status++;
+  
+  Serial.write((uint8_t *)&ddata, sizeof(ddata));
+}
  
-void Changeled() {
+void changeled() {
  /*change LED state on Roboduino */ 
- 
- if(ledmode > 4)
- {
-   ledmode = 0;
- } 
- 
- if(ledmode = 0)
- {
-     ddata.funcnr = 0;
-     ddata.data[0] = 1;
-     ddata.data[1] = 0;
-     ddata.data[2] = 0;
-     ddata.data[3] = 0;
-     ddata.data[4] = 0;
-     ddata.data[5] = 0;
-     ddata.data[6] = 0;     Serial.write((uint8_t *)&ddata, sizeof(ddata));
+
+  ddata.funcnr = 0;
+  ddata.data[0] = 0b00000000;
+  ddata.data[1] = 0;
+  ddata.data[2] = 0;
+  ddata.data[3] = 0;
+  ddata.data[4] = 0;
+  ddata.data[5] = 0;
+  ddata.data[6] = 0;
+
+ switch(ledmode){
+  case 1: {
+     ddata.data[0] = 0b00000001;   
+  } break;
+  case 2: {
+     ddata.data[0] = 0b00000010;
+     ddata.data[1] = 255;
+     ddata.data[2] = 255;
+     ddata.data[3] = 255;
+  } break;
+  case 3: {
+     ddata.data[0] = 0b00000100;
+     ddata.data[4] = 255;
+     ddata.data[5] = 255;
+     ddata.data[6] = 255;
+  } break;
+  case 4: {
+     ddata.data[0] = 0b00000110;
+     ddata.data[1] = 255;
+     ddata.data[2] = 255;
+     ddata.data[3] = 255;
+     ddata.data[4] = 255;
+     ddata.data[5] = 255;
+     ddata.data[6] = 255;
+  } break;
+  case 5: {
+     ddata.data[0] = 0b00001000;
+  } break;
+  case 6:{
+     rgb_party = true;
+  } break;
+  default: {
+     rgb_party = false;
+     ledmode = 0;
+  }
  }
- if(ledmode = 1)
- {
-     ddata.funcnr = 0;
-     ddata.data[0] = 0;
-     ddata.data[1] = 1;
-     ddata.data[2] = 0;
-     ddata.data[3] = 0;
-     ddata.data[4] = 0;
-     ddata.data[5] = 0;
-     ddata.data[6] = 0;     Serial.write((uint8_t *)&ddata, sizeof(ddata));
- }
- if(ledmode = 2)
- {
-     ddata.funcnr = 0;
-     ddata.data[0] = 0;
-     ddata.data[1] = 0;
-     ddata.data[2] = 1;
-     ddata.data[3] = 0;
-     ddata.data[4] = 0;
-     ddata.data[5] = 0;
-     ddata.data[6] = 0;     Serial.write((uint8_t *)&ddata, sizeof(ddata));
- }
- if(ledmode = 3)
- {
-     ddata.funcnr = 0;
-     ddata.data[0] = 0;
-     ddata.data[1] = 1;
-     ddata.data[2] = 1;
-     ddata.data[3] = 0;
-     ddata.data[4] = 0;
-     ddata.data[5] = 0;
-     ddata.data[6] = 0;
-     Serial.write((uint8_t *)&ddata, sizeof(ddata));
- }
- if(ledmode = 4)
- {
-     ddata.funcnr = 0;
-     ddata.data[0] = 0;
-     ddata.data[1] = 0;
-     ddata.data[2] = 0;
-     ddata.data[3] = 1;
-     ddata.data[4] = 0;
-     ddata.data[5] = 0;
-     ddata.data[6] = 0;
-     Serial.write((uint8_t *)&ddata, sizeof(ddata));
- } 
- 
-  led_mode++; 
+  
+  Serial.write((uint8_t *)&ddata, sizeof(ddata));
+  ledmode++; 
 }
 
 void Update_motor_steering()
@@ -187,12 +239,14 @@ void Update_motor_steering()
  
 
 void Write_information() {
-  /* Write motor control information to display */
+  /* Write control information to display */
 
   lcd.setCursor(5, 3);
   lcd.print("    ");
   lcd.setCursor(16, 3);
   lcd.print("    ");
+  lcd.setCursor(15, 2);
+  lcd.print("  ");
 
   delay(1);
 
@@ -201,6 +255,9 @@ void Write_information() {
 
   lcd.setCursor(16, 3);
   lcd.print(motor_r);
+
+  lcd.setCursor(15, 2);
+  lcd.print(ledmode);
 
   delay(30);
 }
@@ -233,5 +290,9 @@ void Update_values() {
   if (-2 < motor_l && 2 > motor_l) {
     motor_l = 0;
   }
-  
+  if(motor_l || motor_r) {
+    transmit = true;
+  } else {
+    transmit = false;
+  }
 }
