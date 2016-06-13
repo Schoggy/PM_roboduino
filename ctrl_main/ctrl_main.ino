@@ -62,7 +62,7 @@ void setup() {
   /* Setup input pins for analog digital converter */
   pinMode(read_x, INPUT);
   pinMode(read_y, INPUT);
-  //pinMode(sw, INPUT);
+
 
   /* Write static text on display */
   lcd.home(); // set cursor to 0,0
@@ -119,7 +119,6 @@ void loop() {
  
 void j_button(){
   j_button_pressed = true;
-  //digitalWrite(13, HIGH);
 }
 
 void partytime(){
@@ -146,7 +145,6 @@ void partytime(){
       }
     
   
-
   party_status++;
   
   Serial.write((uint8_t *)&ddata, sizeof(ddata));
