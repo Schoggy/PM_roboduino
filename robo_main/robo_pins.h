@@ -8,12 +8,12 @@
 #define LED_FRONT_RG 6
 #define LED_FRONT_RB 7
 #define LED_USER 22
-#define MOTOR_L_FOWARD 11
+#define MOTOR_L_FORWARD 11
 #define MOTOR_L_BACKWARD 10
 #define MOTOR_R_FORWARD 9
 #define MOTOR_R_BACKWARD 8
 
-void init_pins(void) { // initialisation for pins; called from setup()
+void init_pins(void) { // Initialisation for pins; called from setup()
   pinMode(LED_STATUS, OUTPUT);
   pinMode(LED_FRONT_LR, OUTPUT);
   pinMode(LED_FRONT_LG, OUTPUT);

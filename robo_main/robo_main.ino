@@ -17,10 +17,8 @@ RCDATA *call_stack_top;
 RCDATA *exec_ptr;
 RCDATA *rcv_ptr;
 
-RCDATA *t_send_arr;
-
-
-int t_send_nr;
+// Store RGB-LED state
+char rgb_data[6];
 
 // Function array: All functions have the return type of void and a RCDATA*
 // as the parameter
@@ -47,8 +45,9 @@ void update_motor_steering(RCDATA *rd);
 void setup() { // The Arduino will run this function once
                // when it is initially powered on.
 
-  init_pins();
+  init_pins(); // Set the pinmode for every pin
 
+  // allocate memory for the local buffer of commands from the remote
   call_stack_top = (RCDATA *)calloc(STACK_LENGTH, sizeof(RCDATA));
 
   exec_ptr = rcv_ptr = call_stack_top;
@@ -60,56 +59,19 @@ void setup() { // The Arduino will run this function once
    * The next 7 bytes are data for the function.
    */
 
-  t_send_nr = 0;
-
   functions[FNCNR_LED] = update_leds;
   functions[FNCNR_MOTORS] = update_motor_steering;
   
   
-  
-  Serial.begin(9600); // start bluetooth serial
+  Serial.begin(9600);  // Start debug serial inteface
+  Serial1.begin(9600); // Start bluetooth serial1, communtcation with the remote
 
 }
 
-void loop() { // the Arduino will loop this function forever
-  
-  //init_t_send(); // run test functions
-  
-  receive_data()
+void loop() { // the Arduino will loop this function forever  
+  receive_data(); // Wait for data from the remote
   decode_received_data();
-}
-
- /* TEST FUNCTIONS */
- 
-int timer;
-void tick(){
-  while(1){
-    for(timer = 0; timer < 50; timer++){}
-    t_send(5);
-    for(timer = 0; timer < 10; timer++){}
-    decode_received_data();
-    for(timer = 0; timer < 500; timer++){}
-  }
-}
-
-void t_send(int nr){
-  for(int n = 0; n < nr; n++){
-    t_receive_data(t_send_arr[t_send_nr + n]);
-  }
-}
-
-void init_t_send(){
-  t_send_arr = (RCDATA*) calloc(256, sizeof(RCDATA));
-  RCDATA* arr_ptr = t_send_arr;
-  for(char n = 0; n < 255; n++){
-    RCDATA rc;
-    rc.funcnr = 0;
-    rc.data[0] = 0b00000010;
-    rc.data[1] = n;
-    rc.data[2] = 255 - n;
-    rc.data[3] = 0;
-  }
-  
+  update_rgb_leds();
 }
 
 /*********************************
@@ -118,13 +80,12 @@ void init_t_send(){
 
 void decode_received_data() { 
   /* This function reads and decodes data packets sent to the robot.
-   * There are two pointers, rcv_ptr, pointing to the last packet received, and exec_ptr, pointing to the last packet read.
-   * This function keeps reading data packets until the last packet read is the last packet received.
+   * There are two pointers, rcv_ptr, pointing to the last packet received,
+   * and exec_ptr, pointing to the last packet read.
+   * This function keeps reading data packets until the last packet read
+   * is the last packet received.
    */
    
-
-   
-  
   while (rcv_ptr != exec_ptr) {
     functions[exec_ptr->funcnr](exec_ptr);
     exec_ptr =
@@ -133,46 +94,48 @@ void decode_received_data() {
 }
 
 void send_data() {
-  // send data back to the controller
+  // Send data back to the controller 
+  // - placeholder - 
 }
 
-
-/*********************************
- *    Interrupt Service Routines *
- *********************************/
+void update_rgb_leds(){
+  // Write the state stored in rgb_data to the RGB-LEDS
+  analogWrite(LED_FRONT_RR, rgb_data[0]);
+  analogWrite(LED_FRONT_RG, rgb_data[1]);
+  analogWrite(LED_FRONT_RB, rgb_data[2]);
+  analogWrite(LED_FRONT_LR, rgb_data[3]);
+  analogWrite(LED_FRONT_LG, rgb_data[4]);
+  analogWrite(LED_FRONT_LB, rgb_data[5]);
+}
 
 void receive_data() {
-  /* This function reads a data packet from the bbuffer of the bluetooth module into the call stack 
-   * and advances the rcv_ptr by one.
+  /* This function reads all data packets from the buffer of the bluetooth module 
+   * into the call stack and advances the rcv_ptr by one.
    */
    
-   //TODO: make sure that Serial.begin(9600) is called in the init() function
-  if(Serial.available() == sizeof(RCDATA)) // if there is a new package in the serial buffer
-  {
-    for(int i = 0; i < sizeof(RCDATA); i++)
-    {
-       *((byte*)rcv_ptr + i) = Serial.read(); // copy the serial buffer into the call stack
+  while(!Serial1.available()){} // Wait until data arrives
+  
+  // Store all data from the buffer of the bluetooth module in the local buffer 
+  while(Serial1.available() >= sizeof(RCDATA)) {
+    
+    for(int i = 0; i < sizeof(RCDATA); i++) { // Write every byte
+       *((byte*)rcv_ptr + i) = Serial1.read();
     }
-    RCDATA* data = rcv_ptr;
-    // add received data to the new struct
-
-    // advance
+    
+    // Advance the receive pointer by the size of one struct
     rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
   }
 }
 
-void t_receive_data(RCDATA rc) {
-  /* This function reads a data packet from the bbuffer of the bluetooth module into the call stack 
-   * and advances the rcv_ptr by one.
+void s_receive_data(RCDATA* rc) {
+  /* This function emulates reading a data packet from the buffer of the bluetooth module into 
+   * the call stack and advances the rcv_ptr by one.
    */
-  
-  free(rcv_ptr);
-  rcv_ptr = &rc;
-  // add received data to the new struct
+   
+  rcv_ptr->funcnr = rc->funcnr;
+  memcpy(rcv_ptr->data, rc->data, 7);
 
-  
-
-  // advance
+  // Advance the receive pointer by the size of one struct
   rcv_ptr = call_stack_top + (((rcv_ptr - call_stack_top) + 1) % STACK_LENGTH);
 }
 
@@ -205,22 +168,22 @@ void update_leds(RCDATA *rd) {
     digitalWrite(LED_STATUS, LOW);
   }
   if(rd->data[0] & 0b00000010){
-    analogWrite(LED_FRONT_RR, rd->data[1]);
-    analogWrite(LED_FRONT_RG, rd->data[2]);
-    analogWrite(LED_FRONT_RB, rd->data[3]);
+    rgb_data[0] = rd->data[1];
+    rgb_data[1] = rd->data[2];
+    rgb_data[2] = rd->data[3];
   } else {
-    analogWrite(LED_FRONT_RR, 0);
-    analogWrite(LED_FRONT_RG, 0);
-    analogWrite(LED_FRONT_RB, 0);
+    rgb_data[0] = 0;
+    rgb_data[1] = 0;
+    rgb_data[2] = 0;
   }
   if(rd->data[0] & 0b00000100){
-    analogWrite(LED_FRONT_LR, rd->data[4]);
-    analogWrite(LED_FRONT_LG, rd->data[5]);
-    analogWrite(LED_FRONT_LB, rd->data[6]);
+    rgb_data[3] = rd->data[4];
+    rgb_data[4] = rd->data[5];
+    rgb_data[5] = rd->data[6];
   } else {
-    analogWrite(LED_FRONT_LR, 0);
-    analogWrite(LED_FRONT_LG, 0);
-    analogWrite(LED_FRONT_LB, 0);
+    rgb_data[3] = 0;
+    rgb_data[4] = 0;
+    rgb_data[5] = 0;
   }
   if(rd->data[0] & 0b00001000){
     digitalWrite(LED_USER, HIGH);
@@ -229,8 +192,6 @@ void update_leds(RCDATA *rd) {
   }
 }
 
-#define MOTOR_VL ((rd->data[0] << 8) | rd->data[1])
-#define MOTOR_VR ((rd->data[2] << 8) | rd->data[3])
 void update_motor_steering(RCDATA *rd) {
   /* This function updates the pins controlling the two motors.
    * The two values with the motor speeds are given in the form of two short variables.
@@ -239,19 +200,27 @@ void update_motor_steering(RCDATA *rd) {
    * Byte 2 and 3 contain the short for the right motor.
    */
 
-  if (MOTOR_VL > 0) {
+  /* DEBUG
+   * Serial.print("\n");
+   * Serial.print((int) rd->data[0]);
+   * Serial.print((int) rd->data[1]);
+   * Serial.print((int) rd->data[2]);
+   * Serial.print((int) rd->data[3]);
+   */
+
+  if (rd->data[0]) {
     digitalWrite(MOTOR_L_BACKWARD, LOW);
-    analogWrite(MOTOR_L_FORWARD, MOTOR_VL);
+    analogWrite(MOTOR_L_FORWARD, rd->data[1]);
   } else {
     digitalWrite(MOTOR_L_FORWARD, LOW);
-    analogWrite(MOTOR_L_BACKWARD, MOTOR_VL);
+    analogWrite(MOTOR_L_BACKWARD,  rd->data[1]);
   }
   
-    if (MOTOR_VR > 0) {
+    if (rd->data[2]) {
     digitalWrite(MOTOR_R_BACKWARD, LOW);
-    analogWrite(MOTOR_R_FORWARD, MOTOR_VR);
+    analogWrite(MOTOR_R_FORWARD,  rd->data[3]);
   } else {
     digitalWrite(MOTOR_R_FORWARD, LOW);
-    analogWrite(MOTOR_R_BACKWARD, MOTOR_VR);
+    analogWrite(MOTOR_R_BACKWARD, rd->data[3]);
   }
 }
