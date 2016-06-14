@@ -46,10 +46,12 @@ void Change_led(void);
  *********************************/
 
 void setup() {
-  /*Setup display library for 20x4 display */
+  // Setup display library for 20x4 display
   lcd.begin(20, 4);
   lcd.setBacklightPin(3, POSITIVE);
   lcd.setBacklight(HIGH);
+
+  // Attach interrupt to digital pin 2 (D2)
   pinMode(2, INPUT);
   digitalWrite(2, HIGH);
   attachInterrupt(digitalPinToInterrupt(2), j_button, LOW);
@@ -59,11 +61,12 @@ void setup() {
   pinMode(11, OUTPUT);
   pinMode(12, OUTPUT);
   pinMode(13, OUTPUT);
-  /* Setup input pins for analog digital converter */
+
+  // Setup input pins for analog digital converter
   pinMode(read_x, INPUT);
   pinMode(read_y, INPUT);
 
-  /* Write static text on display */
+  // Write static text on display
   lcd.home(); // set cursor to 0,0
   lcd.print("*Roboduino  Control*");
   lcd.setCursor(0, 1);
@@ -77,6 +80,7 @@ void setup() {
   lcd.setCursor(10, 3);
   lcd.print("Right:");
 
+  // Initialize some global variables
   ledmode = 0;
   transmit = true;
   j_button_pressed = false;
@@ -84,16 +88,18 @@ void setup() {
   rgb_party = false;
   party_status = 0;
 
-  // init for bluetooth module
+  // Init for bluetooth module
   Serial.begin(9600);
 }
 
 void loop() {
+  // If interrupt was triggered
   if (j_button_pressed && !j_button_rst) {
     changeled();
     Write_information();
     j_button_rst = true;
   }
+  // If joystick button was released, reanable interrupt
   if (j_button_rst) {
     if (digitalRead(2) == HIGH) {
       j_button_rst = false;
@@ -116,8 +122,10 @@ void loop() {
  *    Functions                  *
  *********************************/
 
+// Interrupt service routine, for when the joystick button is pressed
 void j_button() { j_button_pressed = true; }
 
+// Writes RGB values for the leds to the robot
 void partytime() {
   ddata.funcnr = 0;
   ddata.data[0] = 0b00000110;
@@ -147,7 +155,7 @@ void partytime() {
 }
 
 void changeled() {
-  /*change LED state on Roboduino */
+  // Toggle through the led modes on the robot
 
   ddata.funcnr = 0;
   ddata.data[0] = 0b00000000;
@@ -200,7 +208,7 @@ void changeled() {
 }
 
 void Update_motor_steering() {
-  /* Send motor steering signals to Roboduino */
+  // Send motor steering signals to Roboduino
 
   ddata.funcnr = 1;
 
@@ -223,9 +231,10 @@ void Update_motor_steering() {
   Serial.write((uint8_t *)&ddata, sizeof(ddata));
 }
 
+// Write control information to the display
 void Write_information() {
-  /* Write control information to display */
 
+  // Delete preivous values from the display
   lcd.setCursor(5, 3);
   lcd.print("    ");
   lcd.setCursor(16, 3);
@@ -233,8 +242,9 @@ void Write_information() {
   lcd.setCursor(15, 2);
   lcd.print("  ");
 
-  delay(1);
+  delay(1); // The display needs some time to write all characters
 
+  // Write updated values
   lcd.setCursor(5, 3);
   lcd.print(motor_l);
 
@@ -249,7 +259,7 @@ void Write_information() {
 
 void Update_values() {
 
-  /* Read the Joystick Position and normalise them between -255 and 255 */
+  // Read the joystick position and normalise the values to between -255 and 255
   motor_l = (analogRead(read_x) - 513) / 2;
   if (motor_l < -254) {
     motor_l = -254;
@@ -258,6 +268,7 @@ void Update_values() {
     motor_l = 255;
   }
 
+  // Give the ADC some time to finish converting
   delay(1);
 
   motor_r = (analogRead(read_y) - 520) / 2;
@@ -268,13 +279,14 @@ void Update_values() {
     motor_r = 255;
   }
 
-  /* Error correction because the potentiometer isn't 100% precise */
+  // Error correction because the potentiometer isn't 100% precise
   if (-2 < motor_r && 2 > motor_r) {
     motor_r = 0;
   }
   if (-2 < motor_l && 2 > motor_l) {
     motor_l = 0;
   }
+  // If both motors are off (motor_l and motor_r both at 0) only transmit once
   if (motor_l || motor_r) {
     transmit = true;
   } else {
