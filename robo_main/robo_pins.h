@@ -18,11 +18,11 @@ void init_pins(void) { // Initialisation for pins; called from setup()
   pinMode(LED_FRONT_LR, OUTPUT);
   pinMode(LED_FRONT_LG, OUTPUT);
   pinMode(LED_FRONT_LB, OUTPUT);
-  
+
   pinMode(LED_FRONT_RR, OUTPUT);
   pinMode(LED_FRONT_RG, OUTPUT);
   pinMode(LED_FRONT_RB, OUTPUT);
-  
+
   pinMode(LED_USER, OUTPUT);
   pinMode(MOTOR_L_FORWARD, OUTPUT);
   pinMode(MOTOR_L_BACKWARD, OUTPUT);
