@@ -11,7 +11,7 @@ struct data_packet {
 };
 
 /*********************************
- *    Global Variables           *
+      Global Variables
  *********************************/
 
 // IC2: SDA => A4; SCL => A5
@@ -30,10 +30,13 @@ volatile bool j_button_pressed;
 bool rgb_party;
 int party_status;
 
+long newMillisRGB, newMillisSteering;
+long lastMillisRGB, lastMillisSteering;
+
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7);
 
 /*********************************
- *    Function Prototypes        *
+      Function Prototypes
  *********************************/
 
 void Write_information(void);
@@ -42,7 +45,7 @@ void Update_motor_steering(void);
 void Change_led(void);
 
 /*********************************
- *    Main Arduino Functions     *
+      Main Arduino Functions
  *********************************/
 
 void setup() {
@@ -107,26 +110,37 @@ void loop() {
     }
   }
   if (transmit) {
-    Update_values();
-    Update_motor_steering();
-    Write_information();
+    newMillisSteering = millis();
+    if (newMillisSteering >= lastMillisSteering + 50)
+    {
+      Update_values();
+      Update_motor_steering();
+      Write_information();
+    }
   } else {
     Update_values();
   }
   if (rgb_party) {
-    partytime();
+    newMillisRGB = millis();
+    if (newMillisRGB >= lastMillisRGB + 5)
+    {
+      partytime();
+    }
   }
 }
 
 /*********************************
- *    Functions                  *
+      Functions
  *********************************/
 
 // Interrupt service routine, for when the joystick button is pressed
-void j_button() { j_button_pressed = true; }
+void j_button() {
+  j_button_pressed = true;
+}
 
 // Writes RGB values for the leds to the robot
-void partytime() {
+void partytime()
+{
   ddata.funcnr = 0;
   ddata.data[0] = 0b00000110;
   ddata.data[1] = 0;
@@ -149,7 +163,7 @@ void partytime() {
     party_status = 0;
   }
 
-  party_status++;
+  party_status += 5;
 
   Serial.write((uint8_t *)&ddata, sizeof(ddata));
 }
@@ -167,40 +181,40 @@ void changeled() {
   ddata.data[6] = 0;
 
   switch (ledmode) {
-  case 1: {
-    ddata.data[0] = 0b00000001;
-  } break;
-  case 2: {
-    ddata.data[0] = 0b00000010;
-    ddata.data[1] = 255;
-    ddata.data[2] = 255;
-    ddata.data[3] = 255;
-  } break;
-  case 3: {
-    ddata.data[0] = 0b00000100;
-    ddata.data[4] = 255;
-    ddata.data[5] = 255;
-    ddata.data[6] = 255;
-  } break;
-  case 4: {
-    ddata.data[0] = 0b00000110;
-    ddata.data[1] = 255;
-    ddata.data[2] = 255;
-    ddata.data[3] = 255;
-    ddata.data[4] = 255;
-    ddata.data[5] = 255;
-    ddata.data[6] = 255;
-  } break;
-  case 5: {
-    ddata.data[0] = 0b00001000;
-  } break;
-  case 6: {
-    rgb_party = true;
-  } break;
-  default: {
-    rgb_party = false;
-    ledmode = 0;
-  }
+    case 1: {
+        ddata.data[0] = 0b00000001;
+      } break;
+    case 2: {
+        ddata.data[0] = 0b00000010;
+        ddata.data[1] = 255;
+        ddata.data[2] = 255;
+        ddata.data[3] = 255;
+      } break;
+    case 3: {
+        ddata.data[0] = 0b00000100;
+        ddata.data[4] = 255;
+        ddata.data[5] = 255;
+        ddata.data[6] = 255;
+      } break;
+    case 4: {
+        ddata.data[0] = 0b00000110;
+        ddata.data[1] = 255;
+        ddata.data[2] = 255;
+        ddata.data[3] = 255;
+        ddata.data[4] = 255;
+        ddata.data[5] = 255;
+        ddata.data[6] = 255;
+      } break;
+    case 5: {
+        ddata.data[0] = 0b00001000;
+      } break;
+    case 6: {
+        rgb_party = true;
+      } break;
+    default: {
+        rgb_party = false;
+        ledmode = 0;
+      }
   }
 
   Serial.write((uint8_t *)&ddata, sizeof(ddata));
@@ -254,7 +268,7 @@ void Write_information() {
   lcd.setCursor(15, 2);
   lcd.print(ledmode);
 
-  delay(30);
+  //delay(30);
 }
 
 void Update_values() {
