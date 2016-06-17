@@ -21,7 +21,6 @@ int read_x = A0;
 int read_y = A1;
 int motor_l = 0;
 int motor_r = 0;
-int ledsw = 0;
 data_packet ddata;
 int ledmode;
 bool transmit;
@@ -30,8 +29,8 @@ volatile bool j_button_pressed;
 bool rgb_party;
 int party_status;
 
-long newMillisRGB, newMillisSteering;
-long lastMillisRGB, lastMillisSteering;
+unsigned long millis_rgb;
+unsigned long millis_motors;
 
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7);
 
@@ -109,22 +108,20 @@ void loop() {
       j_button_pressed = false;
     }
   }
-  if (transmit) {
-    newMillisSteering = millis();
-    if (newMillisSteering >= lastMillisSteering + 50)
-    {
+  if(transmit){
+    if(millis() >= millis_motors + 50){
       Update_values();
       Update_motor_steering();
       Write_information();
+      millis_motors = millis();
     }
   } else {
     Update_values();
   }
-  if (rgb_party) {
-    newMillisRGB = millis();
-    if (newMillisRGB >= lastMillisRGB + 5)
-    {
+  if(rgb_party){
+    if(millis() >= millis_rgb + 20){
       partytime();
+      millis_rgb = millis();
     }
   }
 }
@@ -163,7 +160,7 @@ void partytime()
     party_status = 0;
   }
 
-  party_status += 5;
+  party_status += 10;
 
   Serial.write((uint8_t *)&ddata, sizeof(ddata));
 }
@@ -267,8 +264,6 @@ void Write_information() {
 
   lcd.setCursor(15, 2);
   lcd.print(ledmode);
-
-  //delay(30);
 }
 
 void Update_values() {
