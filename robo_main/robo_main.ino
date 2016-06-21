@@ -197,22 +197,11 @@ void update_leds(RCDATA *rd) {
 
 void update_motor_steering(RCDATA *rd) {
   /* This function updates the pins controlling the two motors.
-   * The two values with the motor speeds are given in the form of two short
-   * variables.
-   * Byte 0 and byte 1 are part of the first short, containing the value for the
-   * left motor,
-   * with byte 0 as the higher bits of the short.
-   * Byte 2 and 3 contain the short for the right motor.
+   * The state of the two motors (forward or reverse) are given in byte 0 and byte 2.
+   * The byte is 0 for reverse and 1 for forward
+   * The values for the motor speed are given in byte 1 and byte 3. 
    */
-
-  /* DEBUG
-   * Serial.print("\n");
-   * Serial.print((int) rd->data[0]);
-   * Serial.print((int) rd->data[1]);
-   * Serial.print((int) rd->data[2]);
-   * Serial.print((int) rd->data[3]);
-   */
-
+   
   if (rd->data[0]) {
     digitalWrite(MOTOR_L_BACKWARD, LOW);
     analogWrite(MOTOR_L_FORWARD, rd->data[1]);
